@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@variant dark (&:is(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-ar: 'Cairo', system-ui, -apple-system, sans-serif;
+    --font-en: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  [dir="rtl"] {
+    font-family: var(--font-ar);
+  }
+
+  [dir="ltr"] {
+    font-family: var(--font-en);
+  }
+
+  /* Custom scrollbar for ClickUp-like smooth tables */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.6);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

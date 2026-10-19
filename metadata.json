@@ -1,0 +1,6 @@
+{
+  "name": "Elite Jurist - Law Firm Management System",
+  "description": "Comprehensive legal case and practice management workspace with ClickUp-style hierarchy, multilingual Arabic/English RTL support, role-based access control, session scheduling, and expert report tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

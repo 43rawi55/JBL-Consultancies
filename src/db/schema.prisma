@@ -1,0 +1,132 @@
+// Prisma Database Schema for Law Firm Management System
+// Compatible with PostgreSQL, Supabase, CockroachDB, or MySQL
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN   // مدير: Full CRUD access
+  LAWYER  // محامي: View and edit cases assigned to them
+  VIEWER  // متابع: Read-only access
+}
+
+enum CaseStatus {
+  UNDER_REVIEW       // قيد النظر والدراسة
+  HEARING_SCHEDULED  // جلسة مرافعة مجدولة
+  EXPERT_REPORT      // تقرير خبرة
+  RESERVED_JUDGMENT  // محجوزة للحكم
+  EXECUTED           // منفذة
+  CLOSED             // منتهية ومؤرشفة
+}
+
+enum CasePriority {
+  URGENT
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum CategoryType {
+  ELITE_OPPOSITION        // دعاوي ايليت معارض
+  ELITE_NON_OPPOSITION    // دعاوي ايليت غير المعارض
+  EXECUTIONS              // التنفيذات
+  RENTAL_DISPUTES         // دعاوي ايجارية
+  MISC_CASES              // دعاوي متنوعة
+  CRIMINAL_REPORTS        // قضايا جزائية وبلاغات
+  LEGAL_NOTICES           // انذارات قانونية وعدلية
+  CONTRACTS               // العقود
+  COMMERCIAL_LICENSES     // الرخص التجارية
+  TENANCY_CONTRACTS       // عقود الايجار
+  POWERS_OF_ATTORNEY      // الوكالات
+}
+
+model User {
+  id            String        @id @default(uuid())
+  googleId      String?       @unique
+  email         String        @unique
+  nameAr        String
+  nameEn        String
+  avatarUrl     String?
+  role          UserRole      @default(LAWYER)
+  titleAr       String
+  titleEn       String
+  phone         String?
+  isActive      Boolean       @default(true)
+  assignedCases Case[]        @relation("AssignedLawyer")
+  auditLogs     AuditLog[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Case {
+  id                  String        @id @default(uuid())
+  caseNumber          String        @unique // رقم الدعوى الرسمي (مثال: 2024/1105 تجاري كلي)
+  category            CategoryType  // قسم النظام (دعاوي ايليت، تنفيذات، الخ)
+  clientName          String        // اسم الموكل
+  clientRole          String        // صفة الموكل (مدعي، مستأنف، منفذ ضده)
+  opponentName        String        // الخصم
+  opponentRole        String?       // صفة الخصم
+  assigneeId          String        // معرف المحامي المسؤول
+  assignee            User          @relation("AssignedLawyer", fields: [assigneeId], references: [id])
+  caseType            String        // نوع الدعوى (استئناف تجاري، عمالي، الخ)
+  court               String        // المحكمة (دبي، الشارقة، مركز فض المنازعات)
+  courtBranch         String?       // الدائرة القضائية
+  sessionDate         DateTime      // ميعاد الجلسة
+  sessionTime         String?       // توقيت الجلسة (مثلاً 10:00 صباحاً)
+  sessionPurpose      String?       // سبب/موضوع الجلسة
+  isExpertReport      Boolean       @default(false) // هل الجلسة متعلقة بتقرير خبرة
+  expertReportDueDate DateTime?     // ميعاد تسليم تقرير الخبرة
+  lastAction          String        // اخر اجراء اتخذ
+  nextStep            String        // المطلوب والخطوة القادمة
+  status              CaseStatus    @default(HEARING_SCHEDULED)
+  priority            CasePriority  @default(NORMAL)
+  claimAmount         Decimal?      @db.Decimal(14, 2) // قيمة المطالبة بالدرهم
+  notes               String?       @db.Text
+  documents           Document[]
+  auditLogs           AuditLog[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([assigneeId])
+  @@index([category])
+  @@index([status])
+  @@index([sessionDate])
+  @@index([isExpertReport])
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fileName    String
+  fileSize    String
+  fileType    String
+  fileUrl     String
+  uploadedAt  DateTime @default(now())
+
+  @@index([caseId])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  actionAr    String
+  actionEn    String
+  details     String?
+  createdAt   DateTime @default(now())
+
+  @@index([caseId])
+  @@index([userId])
+}
